@@ -86,7 +86,11 @@ class HumanGreeter(object):
             print("Callbacks do not yet work with Python3, please run the code with Python2.7")
         # Get the services ALTextToSpeech and ALFaceDetection.
         self.tts = session.service("ALTextToSpeech")
-        self.face_detection = session.service("ALFaceDetection")
+        try:
+            self.face_detection = session.service("ALFaceDetection")
+        except:
+            self.face_detection = None
+            print("ALFaceDetection was not found in index (maybe using Choregraph virtual robot?) -> setting self.face_detection to None which might cause errors with some function calls")
         self.got_face = False
         self.human_name = None
 

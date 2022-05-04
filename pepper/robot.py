@@ -50,7 +50,7 @@ class Pepper:
 
     """
 
-    def __init__(self, ip_address, port=9559):
+    def __init__(self, ip_address, port=9559, enable_ssh_connection = True):
         self.session = qi.Session()
 
         self.session.connect("tcp://{0}:{1}".format(ip_address, port))
@@ -58,44 +58,78 @@ class Pepper:
         self.ip_address = ip_address
         self.port = port
         connection_url = "tcp://" + ip_address + ":" + str(port)
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.load_system_host_keys()
-        ssh.connect(hostname=self.ip_address, username="nao", password="nao")
-        self.scp = SCPClient(ssh.get_transport())
+        self.enable_ssh_connection = enable_ssh_connection
+        if self.enable_ssh_connection:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.load_system_host_keys()
+            ssh.connect(hostname=self.ip_address, username="nao", password="nao")
+            self.scp = SCPClient(ssh.get_transport())
         self.app = qi.Application(["ReactToTouch","HumanGreeter", "--qi-url=" + connection_url])
         self.human_reco = HumanGreeter(self.app)
         self.posture_service = self.session.service("ALRobotPosture")
         self.motion_service = self.session.service("ALMotion")
         self.tracker_service = self.session.service("ALTracker")
         self.tts_service = self.session.service("ALAnimatedSpeech")
-        self.tablet_service = self.session.service("ALTabletService")
+        try:
+            self.tablet_service = self.session.service("ALTabletService")
+        except:
+            self.tablet_service = None
+            print("ALTabletService was not found in index (maybe using Choregraph virtual robot?) -> setting self.tablet_service to None which might cause errors with some function calls")
+        
         self.autonomous_life_service = self.session.service("ALAutonomousLife")
-        self.system_service = self.session.service("ALSystem")
+        try:
+            self.system_service = self.session.service("ALSystem")
+        except:
+            self.system_service = None
+            print("ALSystem was not found in index (maybe using Choregraph virtual robot?) -> setting self.system_service to None which might cause errors with some function calls")
         self.navigation_service = self.session.service("ALNavigation")
         self.battery_service = self.session.service("ALBattery")
         self.awareness_service = self.session.service("ALBasicAwareness")
         self.led_service = self.session.service("ALLeds")
-        self.audio_device = self.session.service("ALAudioDevice")
+        try:
+            self.audio_device = self.session.service("ALAudioDevice")
+        except:
+            self.audio_device = None
+            print("ALAudioDevice was not found in index (maybe using Choregraph virtual robot?) -> setting self.audio_device to None which might cause errors with some function calls")
         self.camera_device = self.session.service("ALVideoDevice")
-        self.face_detection_service = self.session.service("ALFaceDetection")
+        try:
+            self.face_detection_service = self.session.service("ALFaceDetection")
+        except:
+            self.face_detection_service = None
+            print("ALFaceDetection was not found in index (maybe using Choregraph virtual robot?) -> setting self.face_detection_service to None which might cause errors with some function calls")
         self.memory_service = self.session.service("ALMemory")
         self.audio_service = self.session.service("ALAudioPlayer")
         self.animation_service = self.session.service("ALAnimationPlayer")
         self.behavior_service = self.session.service("ALBehaviorManager")
-        self.face_characteristic = self.session.service("ALFaceCharacteristics")
+        try:
+            self.face_characteristic = self.session.service("ALFaceCharacteristics")
+        except:
+            self.face_characteristic = None
+            print("ALFaceCharacteristics was not found in index (maybe using Choregraph virtual robot?) -> setting self.face_characteristic to None which might cause errors with some function calls")
         self.people_perception = self.session.service("ALPeoplePerception")
-        self.speech_service = self.session.service("ALSpeechRecognition")
+        try:
+            self.speech_service = self.session.service("ALSpeechRecognition")
+        except:
+            self.speech_service = None
+            print("ALSpeechRecognition was not found in index (maybe using Choregraph virtual robot?) -> setting self.speech_service to None which might cause errors with some function calls")
         self.dialog_service = self.session.service("ALDialog")
-        self.audio_recorder = self.session.service("ALAudioRecorder")
-
+        try:
+            self.audio_recorder = self.session.service("ALAudioRecorder")
+        except:
+            self.audio_recorder = None
+            print("ALAudioRecorder was not found in index (maybe using Choregraph virtual robot?) -> setting self.audio_recorder to None which might cause errors with some function calls")
 
         self.slam_map = None
         self.localization = None
         self.camera_link = None
 
         self.recognizer = speech_recognition.Recognizer()
-        self.autonomous_blinking_service = self.session.service("ALAutonomousBlinking")
+        try:
+            self.autonomous_blinking_service = self.session.service("ALAutonomousBlinking")
+        except:
+            self.autonomous_blinking_service = None
+            print("ALAutonomousBlinking was not found in index (maybe using Choregraph virtual robot?) -> setting self.autonomous_blinking_service to None which might cause errors with some function calls")
         self.eye_blinking_enabled = True
 
         self.voice_speed = 100
@@ -1034,9 +1068,12 @@ class Pepper:
         :param file_name: File name with extension (or path)
         :type file_name: string
         """
-        self.scp.put(file_name)
-        print("[INFO]: File " + file_name + " uploaded")
-        self.scp.close()
+        if not self.enable_ssh_connection:
+            print("[INFO]: ssh connection is disabled -> no file uploaded")
+        else:
+            self.scp.put(file_name)
+            print("[INFO]: File " + file_name + " uploaded")
+            self.scp.close()
 
     def download_file(self, file_name):
         """
@@ -1046,9 +1083,12 @@ class Pepper:
         :param file_name: File name with extension (or path)
         :type file_name: string
         """
-        self.scp.get(file_name, local_path=tmp_path)
-        print("[INFO]: File " + file_name + " downloaded")
-        self.scp.close()
+        if not self.enable_ssh_connection:
+            print("[INFO]: ssh connection is disabled -> no file downloaded")
+        else:
+            self.scp.get(file_name, local_path=tmp_path)
+            print("[INFO]: File " + file_name + " downloaded")
+            self.scp.close()
 
     def speech_to_text(self, audio_file, lang="en-US"):
         """
