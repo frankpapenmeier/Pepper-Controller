@@ -50,7 +50,14 @@ class Pepper:
 
     """
 
-    def __init__(self, ip_address, port=9559, enable_ssh_connection = True):
+    def __init__(self, ip_address, port=9559, enable_ssh_connection = None):
+        if enable_ssh_connection is None:
+            if ip_address == "127.0.0.1": # default: disable ssh when connected to localhost, e.g. to Choregraph virtual robot
+                enable_ssh_connection = False
+                print("SSH connection was disabled (assumption that connected to Choregraph virtual robot due to 127.0.0.1 as IP). If SSH is required, enable it by passing the parameter enable_ssh_connection = True")
+            else: # default: enable ssh when connected to other computer / robot
+                enable_ssh_connection = True
+    
         self.session = qi.Session()
 
         self.session.connect("tcp://{0}:{1}".format(ip_address, port))
