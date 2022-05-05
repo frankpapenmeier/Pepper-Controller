@@ -161,6 +161,10 @@ class Pepper:
         self.dialog_service.setLanguage("English")
         print("English language was set up")
 
+    def set_german_language(self):
+        self.dialog_service.setLanguage("German")
+        print("German language was set up")
+
     def say(self, text, bodylanguage="contextual"):
         """Animated say text"""
         configuration = {"bodyLanguageMode":bodylanguage}
@@ -334,6 +338,8 @@ class Pepper:
             self.say("Mám nabitých " + str(battery) + " procent baterie")
         elif language == "English":
             self.say("My battery level is " + str(battery) + " %")
+        elif language == "German":
+            self.say("Mein Akkustand beträgt " + str(battery) + " %")
         
     def blink_eyes(self, rgb):
         """
