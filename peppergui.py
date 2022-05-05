@@ -175,7 +175,7 @@ class PepperControllerApp:
         if self.robot == None:
             self.ip_address = PepperIP
             self.port = port
-            self.robot = Pepper(self.ip_address, self.port)
+            self.robot = Pepper(self.ip_address, self.port, enable_ssh_connection = False)
             self.change_language(self.language)
             self.set_scales()
             # auto life setup
